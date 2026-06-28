@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import PriceHistoryPage from './pages/PriceHistory';
 import TradingBots from './pages/TradingBots';
 import BinanceTrade from './pages/BinanceTrade';
+import BotControl from './pages/BotControl';
 
 const App: React.FC = () => {
   const [page, setPage] = useState('dashboard');
@@ -53,6 +54,7 @@ const App: React.FC = () => {
       case 'history': return <PriceHistoryPage />;
       case 'bots': return <TradingBots />;
       case 'binance': return <BinanceTrade />;
+      case 'bot-control': return <BotControl />;
       default: return <Dashboard />;
     }
   };
