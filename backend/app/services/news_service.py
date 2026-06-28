@@ -4,7 +4,13 @@ import time
 from datetime import datetime
 
 live_news = []
-RSS_FEEDS = ["https://cointelegraph.com/rss", "https://coindesk.com/arc/outboundfeeds/rss/"]
+
+RSS_FEEDS = [
+    "https://cointelegraph.com/rss",
+    "https://coindesk.com/arc/outboundfeeds/rss/",
+    "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+    "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+]
 
 def fetch_news():
     global live_news

@@ -1,75 +1,44 @@
-from fastapi import APIRouter
-from app.services.bots.manager import bot_manager
+from fastapi import APIRouter, Query
+from app.services.trading_bot import trading_bot
 
 router = APIRouter(prefix="/api/bots", tags=["Trading Bots"])
 
-@router.post("/start/grid")
-def start_grid(symbol: str = "BTCUSDT"):
-    return bot_manager.start_grid_bot(symbol)
+@router.get("/grid/{symbol}")
+def grid_bot(symbol: str, price: float = Query(default=0)):
+    if price == 0:
+        return {"error": "Fiyat girin. Örnek: /api/bots/grid/BTC?price=60000"}
+    return trading_bot.generate_grid_signals(symbol.upper(), price)
 
-@router.post("/start/scalping")
-def start_scalping(symbol: str = "BTCUSDT"):
-    return bot_manager.start_scalping_bot(symbol)
-
-@router.post("/start/momentum")
-def start_momentum(symbol: str = "BTCUSDT"):
-    return bot_manager.start_momentum_bot(symbol)
-
-@router.post("/start/all")
-def start_all(symbol: str = "BTCUSDT"):
-    return bot_manager.start_all(symbol)
-
-@router.post("/stop/all")
-def stop_all():
-    return bot_manager.stop_all()
-
-@router.get("/status")
-def get_status():
-    return bot_manager.get_all_status()
-
-@router.get("/grid")
-def grid_bot(symbol: str = "BTCUSDT", price: float = 0):
-    return {
-        "strategy": "Grid Bot",
-        "symbol": symbol,
-        "capital": 100,
-        "grid_levels": 5,
-        "grid_spacing": "1%",
-        "expected_daily": "$8-15",
-        "risk": "Low"
-    }
+@router.get("/dca/{symbol}")
+def dca_bot(symbol: str, price: float = Query(default=0)):
+    if price == 0:
+        return {"error": "Fiyat girin. Örnek: /api/bots/dca/BTC?price=60000"}
+    return trading_bot.generate_dca_signals(symbol.upper(), price)
 
 @router.get("/scalping/{symbol}")
-def scalping_bot(symbol: str, price: float = 0):
-    return {
-        "strategy": "AI Scalping",
-        "symbol": symbol,
-        "capital": 100,
-        "max_trades": 50,
-        "expected_daily": "$10-25",
-        "risk": "Medium"
-    }
+def scalping_bot(symbol: str, price: float = Query(default=0)):
+    if price == 0:
+        return {"error": "Fiyat girin. Örnek: /api/bots/scalping/BTC?price=60000"}
+    return trading_bot.generate_ai_scalping_signals(symbol.upper(), price)
 
 @router.get("/momentum/{symbol}")
-def momentum_bot(symbol: str, price: float = 0):
-    return {
-        "strategy": "Momentum Bot",
-        "symbol": symbol,
-        "capital": 100,
-        "expected_daily": "$15-40",
-        "risk": "High"
-    }
+def momentum_bot(symbol: str, price: float = Query(default=0)):
+    if price == 0:
+        return {"error": "Fiyat girin. Örnek: /api/bots/momentum/BTC?price=60000"}
+    return trading_bot.generate_momentum_signals(symbol.upper(), price)
 
 @router.get("/all/{symbol}")
-def all_bots(symbol: str, price: float = 0):
+def all_bots(symbol: str, price: float = Query(default=0)):
+    if price == 0:
+        return {"error": "Fiyat girin"}
     return {
-        "symbol": symbol,
+        "symbol": symbol.upper(),
+        "price": price,
         "strategies": {
-            "grid": {"capital": "$50", "expected_daily": "$8-15", "risk": "Low"},
-            "scalping": {"capital": "$30", "expected_daily": "$10-25", "risk": "Medium"},
-            "momentum": {"capital": "$20", "expected_daily": "$15-40", "risk": "High"}
+            "grid": trading_bot.generate_grid_signals(symbol.upper(), price),
+            "dca": trading_bot.generate_dca_signals(symbol.upper(), price),
+            "scalping": trading_bot.generate_ai_scalping_signals(symbol.upper(), price),
+            "momentum": trading_bot.generate_momentum_signals(symbol.upper(), price)
         },
-        "total_capital": "$100",
-        "total_expected_daily": "$20-40",
-        "monthly_projection": "$600-1,200"
+        "recommendation": trading_bot.generate_ai_scalping_signals(symbol.upper(), price)
     }

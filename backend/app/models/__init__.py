@@ -1,2 +1,2 @@
 from .user import User
-from .asset import PriceHistory
+from .asset import AssetPrice

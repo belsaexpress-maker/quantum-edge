@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
-from .config import settings
+from app.core.config import settings
+import hashlib
+import hmac
+import base64
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
@@ -22,3 +25,20 @@ def verify_token(token: str) -> dict:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except:
         return None
+
+# API Key doğrulama (iç servisler için)
+def verify_api_key(api_key: str) -> bool:
+    expected = hashlib.sha256(settings.SECRET_KEY.encode()).hexdigest()
+    provided = hashlib.sha256(api_key.encode()).hexdigest()
+    return hmac.compare_digest(expected, provided)
+
+# Brute force koruması
+login_attempts = defaultdict(list)
+
+def check_login_attempts(ip: str) -> bool:
+    now = time.time()
+    attempts = [t for t in login_attempts[ip] if now - t < 300]  # 5 dakika
+    if len(attempts) >= 5:  # 5 başarısız deneme
+        return False
+    login_attempts[ip].append(now)
+    return True
