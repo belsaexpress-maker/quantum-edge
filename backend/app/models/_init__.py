@@ -1,0 +1,1 @@
+echo from .asset import PriceHistory > app\models\__init__.py

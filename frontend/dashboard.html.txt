@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quantum Edge</title>
+</head>
+<body style="background:#0b0f1a;color:white;font-family:Arial">
+
+<h1>⚡ QUANTUM EDGE</h1>
+
+<div id="btc"></div>
+<div id="signal"></div>
+
+<script>
+fetch("/market")
+.then(r => r.json())
+.then(d => {
+    document.getElementById("btc").innerHTML =
+    "BTC: $" + d.bitcoin.usd;
+});
+
+fetch("/signal")
+.then(r => r.json())
+.then(d => {
+    document.getElementById("signal").innerHTML =
+    "Signal: " + d.BTC.signal;
+});
+</script>
+
+</body>
+</html>

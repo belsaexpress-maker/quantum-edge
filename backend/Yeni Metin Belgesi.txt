@@ -1,0 +1,18 @@
+import telegram
+import asyncio
+
+# Buraya kendi bilgilerini gireceksin
+TOKEN = "Edems0202bot"
+CHAT_ID = "1245307691"
+
+bot = telegram.Bot(token=TOKEN)
+
+async def send_telegram_message(message):
+    try:
+        await bot.send_message(chat_id=CHAT_ID, text=message)
+    except Exception as e:
+        print(f"Telegram Hatası: {e}")
+
+# Basit bir senkron wrapper
+def notify(message):
+    asyncio.run(send_telegram_message(message))
