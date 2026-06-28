@@ -1,14 +1,12 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
+from app.services.binance_service import get_account_balance, get_ticker_price, place_order, get_open_orders, cancel_order
 from pydantic import BaseModel
-from app.services.binance_service import (
-    get_account_balance, get_ticker_price, place_order, get_open_orders, cancel_order
-)
 
 router = APIRouter(prefix="/api/binance", tags=["Binance"])
 
 class OrderRequest(BaseModel):
     symbol: str
-    side: str  # BUY veya SELL
+    side: str
     quantity: float
     order_type: str = "MARKET"
 
