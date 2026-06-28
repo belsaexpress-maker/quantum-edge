@@ -1,3 +1,4 @@
+import { useWebSocket } from '../hooks/useWebSocket';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Card from '../components/ui/Card';
@@ -21,6 +22,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedSymbol, setSelectedSymbol] = useState('BTCUSD');
   const [selectedName, setSelectedName] = useState('Bitcoin');
+  const { prices, flashSymbols } = useWebSocket();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,12 +45,15 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-3 max-w-full overflow-x-hidden">
+      {/* Live Ticker Bar - Anlık fiyatlar */}
       <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1">
         {cryptoData.slice(0, 10).map((coin) => (
           <div key={coin.symbol} onClick={() => handleSelectCoin(coin.symbol, coin.name)}
             className={`shrink-0 px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${selectedSymbol === `${coin.symbol}USD` ? 'bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/40' : 'bg-[var(--color-bg-card)] border border-[var(--color-border)] hover:border-[var(--color-accent)]/50'}`}>
             <span className="font-bold">{coin.symbol}</span>
-            <span className="ml-1">${coin.price < 1 ? coin.price.toFixed(4) : coin.price.toLocaleString()}</span>
+            <span className={`ml-1 transition-all duration-300 ${flashSymbols.has(coin.symbol) ? 'text-yellow-400 scale-110 font-bold' : ''}`}>
+              ${prices[coin.symbol]?.toFixed(2) || (coin.price < 1 ? coin.price.toFixed(4) : coin.price.toLocaleString())}
+            </span>
             <span className={`ml-1 ${coin.change_24h >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>{coin.change_24h >= 0 ? '+' : ''}{coin.change_24h.toFixed(1)}%</span>
           </div>
         ))}
@@ -69,7 +74,12 @@ const Dashboard: React.FC = () => {
               <div key={coin.symbol} onClick={() => handleSelectCoin(coin.symbol, coin.name)}
                 className={`flex items-center justify-between p-1.5 rounded cursor-pointer transition-colors ${selectedSymbol === `${coin.symbol}USD` ? 'bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/30' : 'hover:bg-[var(--color-bg-hover)]'}`}>
                 <div className="flex items-center gap-2"><div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold">{coin.symbol[0]}</div><div><div className="text-xs font-medium">{coin.symbol}</div><div className="text-xs text-[var(--color-text-muted)] hidden sm:block">{coin.name}</div></div></div>
-                <div className="text-right"><div className="text-xs font-medium">${coin.price < 1 ? coin.price.toFixed(4) : coin.price.toLocaleString()}</div><div className={`text-xs ${coin.change_24h >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>{coin.change_24h >= 0 ? '+' : ''}{coin.change_24h.toFixed(2)}%</div></div>
+                <div className="text-right">
+                  <div className={`text-xs font-medium transition-all duration-300 ${flashSymbols.has(coin.symbol) ? 'text-yellow-400 font-bold' : ''}`}>
+                    ${prices[coin.symbol]?.toFixed(2) || (coin.price < 1 ? coin.price.toFixed(4) : coin.price.toLocaleString())}
+                  </div>
+                  <div className={`text-xs ${coin.change_24h >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>{coin.change_24h >= 0 ? '+' : ''}{coin.change_24h.toFixed(2)}%</div>
+                </div>
               </div>
             ))}
           </div>
