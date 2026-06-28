@@ -13,30 +13,23 @@ import Alerts from './pages/Alerts';
 import SettingsPage from './pages/Settings';
 import Pricing from './pages/Pricing';
 import Backtesting from './pages/Backtesting';
-import Auth from './pages/Auth';
 import Profile from './pages/Profile';
 import PriceHistoryPage from './pages/PriceHistory';
 import TradingBots from './pages/TradingBots';
 import BinanceTrade from './pages/BinanceTrade';
-import BotControl from './pages/BotControl';
 
 const App: React.FC = () => {
   const [page, setPage] = useState('dashboard');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    if (token && savedUser) { setIsLoggedIn(true); setUser(JSON.parse(savedUser)); }
-    const handleHashChange = () => { const hash = window.location.hash.replace('#', ''); if (hash) setPage(hash); };
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash) setPage(hash);
+    };
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
-
-  const handleLogin = (userData: any) => { setIsLoggedIn(true); setUser(userData); setPage('dashboard'); window.location.hash = 'dashboard'; };
-  if (!isLoggedIn) return <Auth onLogin={handleLogin} />;
 
   const renderPage = () => {
     switch (page) {
@@ -54,12 +47,17 @@ const App: React.FC = () => {
       case 'history': return <PriceHistoryPage />;
       case 'bots': return <TradingBots />;
       case 'binance': return <BinanceTrade />;
-      case 'bot-control': return <BotControl />;
       default: return <Dashboard />;
     }
   };
 
-  return <LanguageProvider><ThemeProvider><Layout>{renderPage()}</Layout></ThemeProvider></LanguageProvider>;
+  return (
+    <LanguageProvider>
+      <ThemeProvider>
+        <Layout>{renderPage()}</Layout>
+      </ThemeProvider>
+    </LanguageProvider>
+  );
 };
 
 export default App;
