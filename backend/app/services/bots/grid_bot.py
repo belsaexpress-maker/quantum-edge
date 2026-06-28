@@ -4,7 +4,7 @@ import random
 from datetime import datetime
 
 class GridBot:
-    def __init__(self, symbol="BTCUSDT", capital=100, grid_levels=5, grid_spacing=0.01):
+    def __init__(self, symbol="BTCUSDT", capital=50, grid_levels=5, grid_spacing=0.01):
         self.symbol = symbol
         self.capital = capital
         self.grid_levels = grid_levels
@@ -14,80 +14,63 @@ class GridBot:
         self.positions = []
         self.trades = []
         self.total_profit = 0
-        self.current_price = 60000  # Başlangıç fiyatı
-        
+        self.current_price = 60000
+
     def setup_grid(self):
-        """Grid seviyelerini oluştur"""
         self.positions = []
         for i in range(self.grid_levels):
             buy_price = self.current_price * (1 - self.grid_spacing * (i + 1))
             sell_price = self.current_price * (1 + self.grid_spacing * (i + 1))
             self.positions.append({
                 "level": i + 1,
-                "buy_price": buy_price,
-                "sell_price": sell_price,
-                "amount": self.per_level,
+                "buy_price": round(buy_price, 2),
+                "sell_price": round(sell_price, 2),
                 "active": False
             })
-    
+
     def update_price(self):
-        """Fiyatı simüle et (gerçekte Binance API'den alınır)"""
-        change = random.uniform(-0.02, 0.02)
+        change = random.uniform(-0.005, 0.005)
         self.current_price *= (1 + change)
         return self.current_price
-    
+
     def check_and_trade(self):
-        """Alım-satım sinyallerini kontrol et"""
         for pos in self.positions:
-            if not pos["active"]:
-                # Alım fırsatı
-                if self.current_price <= pos["buy_price"]:
-                    pos["active"] = True
-                    self.trades.append({
-                        "type": "BUY",
-                        "price": self.current_price,
-                        "amount": pos["amount"],
-                        "level": pos["level"],
-                        "time": datetime.now().isoformat()
-                    })
-            else:
-                # Satım fırsatı
-                if self.current_price >= pos["sell_price"]:
-                    profit = (pos["sell_price"] - pos["buy_price"]) * (pos["amount"] / pos["buy_price"])
-                    self.total_profit += profit
-                    pos["active"] = False
-                    self.trades.append({
-                        "type": "SELL",
-                        "price": self.current_price,
-                        "profit": round(profit, 2),
-                        "level": pos["level"],
-                        "time": datetime.now().isoformat()
-                    })
-    
+            if not pos["active"] and self.current_price <= pos["buy_price"]:
+                pos["active"] = True
+                self.trades.append({
+                    "type": "BUY", "price": round(self.current_price, 2),
+                    "level": pos["level"], "time": datetime.now().isoformat()
+                })
+            elif pos["active"] and self.current_price >= pos["sell_price"]:
+                profit = (pos["sell_price"] - pos["buy_price"]) / pos["buy_price"] * self.per_level
+                self.total_profit += profit
+                pos["active"] = False
+                self.trades.append({
+                    "type": "SELL", "price": round(self.current_price, 2),
+                    "profit": round(profit, 2), "level": pos["level"],
+                    "time": datetime.now().isoformat()
+                })
+
     def run(self):
-        """Botu başlat"""
         self.active = True
         self.setup_grid()
-        
         def loop():
             while self.active:
                 self.update_price()
                 self.check_and_trade()
-                time.sleep(10)  # 10 saniyede bir kontrol
-        
+                time.sleep(10)
         threading.Thread(target=loop, daemon=True).start()
-        return {"status": "started", "symbol": self.symbol, "capital": self.capital}
-    
+        return {"status": "started", "symbol": self.symbol}
+
     def stop(self):
         self.active = False
         return {"status": "stopped", "total_profit": round(self.total_profit, 2)}
-    
+
     def get_status(self):
         return {
-            "symbol": self.symbol,
-            "active": self.active,
+            "symbol": self.symbol, "active": self.active,
             "current_price": round(self.current_price, 2),
             "total_profit": round(self.total_profit, 2),
-            "positions": self.positions,
-            "recent_trades": self.trades[-10:]
+            "trades": len(self.trades),
+            "positions": self.positions
         }
