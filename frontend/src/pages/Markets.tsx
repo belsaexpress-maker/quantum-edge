@@ -28,7 +28,18 @@ const Markets: React.FC = () => {
     fetchCoins();
   }, []);
 
-  useEffect(() => { setFiltered(search ? coins.filter(c => c.symbol.toLowerCase().includes(search.toLowerCase()) || c.name.toLowerCase().includes(search.toLowerCase())) : coins); }, [search, coins]);
+  // URL'den arama parametresini oku
+  useEffect(() => {
+    const hash = window.location.hash;
+    const queryString = hash.includes('?') ? hash.split('?')[1] : '';
+    const params = new URLSearchParams(queryString);
+    const q = params.get('search');
+    if (q) setSearch(q);
+  }, []);
+
+  useEffect(() => {
+    setFiltered(search ? coins.filter(c => c.symbol.toLowerCase().includes(search.toLowerCase()) || c.name.toLowerCase().includes(search.toLowerCase())) : coins);
+  }, [search, coins]);
 
   const handleSelect = (symbol: string, name: string) => { setSelectedCoin(`${symbol}USD`); setSelectedName(name); };
   const toggleWatchlist = (symbol: string) => { setWatchlist(prev => prev.includes(symbol) ? prev.filter(s => s !== symbol) : [...prev, symbol]); };
@@ -60,7 +71,13 @@ const Markets: React.FC = () => {
       </Card>
 
       <Card className="p-0 overflow-hidden">
-        <div className="p-3 border-b border-[var(--color-border)]"><div className="relative"><Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" /><input type="text" placeholder={t('search_coin')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)]" /></div></div>
+        <div className="p-3 border-b border-[var(--color-border)]">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+            <input type="text" placeholder={t('search_coin')} value={search} onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)]" />
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead><tr className="text-[var(--color-text-muted)] border-b border-[var(--color-border)]"><th className="text-left py-2 px-2 w-6"></th><th className="text-left py-2 px-2">#</th><th className="text-left py-2 px-2">{t('name')}</th><th className="text-right py-2 px-2">{t('price')}</th><th className="text-right py-2 px-2">{t('change_24h')}</th><th className="text-right py-2 px-2 hidden md:table-cell">{t('market_cap')}</th><th className="text-right py-2 px-2 hidden lg:table-cell">{t('volume')}</th></tr></thead>
