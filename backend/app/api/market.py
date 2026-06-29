@@ -34,7 +34,6 @@ def get_crypto_prices(limit: int = Query(default=50, le=100)):
 
 @router.get("/live-prices")
 def get_live_prices():
-    """CoinMarketCap'ten tüm coinlerin anlık fiyatlarını çeker"""
     try:
         url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
         headers = {"X-CMC_PRO_API_KEY": settings.CMC_API_KEY}
@@ -47,8 +46,7 @@ def get_live_prices():
                 "price": coin["quote"]["USD"]["price"],
                 "change_24h": coin["quote"]["USD"]["percent_change_24h"],
                 "volume": coin["quote"]["USD"]["volume_24h"],
-                "name": coin["name"],
-                "rank": coin["cmc_rank"]
+                "name": coin["name"], "rank": coin["cmc_rank"]
             }
         return prices
     except:

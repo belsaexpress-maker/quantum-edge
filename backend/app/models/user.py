@@ -9,4 +9,5 @@ class User(Base):
     email = Column(String, unique=True)
     password = Column(String)
     is_premium = Column(Boolean, default=False)
+    two_factor_secret = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
