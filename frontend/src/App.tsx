@@ -18,6 +18,7 @@ import PriceHistoryPage from './pages/PriceHistory';
 import TradingBots from './pages/TradingBots';
 import BinanceTrade from './pages/BinanceTrade';
 import Trade from './pages/Trade';
+import ConnectExchange from './pages/ConnectExchange';
 
 
 const App: React.FC = () => {
@@ -50,6 +51,7 @@ const App: React.FC = () => {
       case 'bots': return <TradingBots />;
       case 'binance': return <BinanceTrade />;
       case 'trade': return <Trade />;
+      case 'connect-exchange': return <ConnectExchange />;
       default: return <Dashboard />;
     }
   };

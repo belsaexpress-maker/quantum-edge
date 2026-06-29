@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, TrendingUp, Newspaper, Brain, Briefcase, Bell, Search, Menu, X, ChevronDown, User, Settings, LogOut, BarChart3, Sparkles, Bot, Wallet, Globe } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Newspaper, Brain, Briefcase, Bell, Search, Menu, X, ChevronDown, User, Settings, LogOut, BarChart3, Sparkles, Bot, Wallet, Globe, Link } from 'lucide-react';
 import { useLang } from '../../context/LanguageContext';
 
 const Header: React.FC = () => {
@@ -25,6 +25,7 @@ const Header: React.FC = () => {
     { id: 'settings', icon: Settings, label: t('settings') },
     { id: 'bot-control', icon: Bot, label: 'Bot Control' },
     { id: 'trade', icon: TrendingUp, label: 'Trade' },
+    { id: 'connect-exchange', icon: Link, label: 'Borsa Bağla' },
   ];
 
   const handleClick = (id: string) => { setActive(id); window.location.hash = id; window.dispatchEvent(new HashChangeEvent('hashchange')); setMobileOpen(false); setProfileOpen(false); };
