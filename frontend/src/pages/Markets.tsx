@@ -18,52 +18,39 @@ const Markets: React.FC = () => {
   const [timeframe, setTimeframe] = useState('60');
   const [watchlist, setWatchlist] = useState<string[]>(['BTC', 'ETH', 'SOL']);
 
-  // Coin verilerini çek
-  const fetchCoins = async () => {
-    try {
-      const res = await axios.get('http://localhost:8000/api/market/crypto?limit=100');
-      if (res.data?.data) {
-        setCoins(res.data.data);
-        setFiltered(res.data.data);
-      }
-    } catch (err) { console.error(err); } finally { setLoading(false); }
-  };
-
   useEffect(() => {
-    fetchCoins();
+    axios.get('http://localhost:8000/api/market/crypto?limit=50')
+      .then(res => {
+        if (res.data?.data) {
+          setCoins(res.data.data);
+          setFiltered(res.data.data);
+        }
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
   }, []);
 
   // URL'den arama parametresini oku
   useEffect(() => {
-    const checkUrl = () => {
-      const hash = window.location.hash;
-      const queryString = hash.includes('?') ? hash.split('?')[1] : '';
-      const params = new URLSearchParams(queryString);
-      const q = params.get('search');
-      if (q) setSearch(q);
-    };
-    checkUrl();
-    window.addEventListener('hashchange', checkUrl);
-    return () => window.removeEventListener('hashchange', checkUrl);
+    const hash = window.location.hash;
+    const queryString = hash.includes('?') ? hash.split('?')[1] : '';
+    const params = new URLSearchParams(queryString);
+    const q = params.get('search');
+    if (q) setSearch(q);
   }, []);
 
-  // Arama filtresi
   useEffect(() => {
-    if (search) {
-      setFiltered(coins.filter(c => c.symbol.toLowerCase().includes(search.toLowerCase()) || c.name.toLowerCase().includes(search.toLowerCase())));
-    } else {
-      setFiltered(coins);
-    }
+    setFiltered(search ? coins.filter(c => c.symbol.toLowerCase().includes(search.toLowerCase()) || c.name.toLowerCase().includes(search.toLowerCase())) : coins);
   }, [search, coins]);
 
   const handleSelect = (symbol: string, name: string) => { setSelectedCoin(`${symbol}USD`); setSelectedName(name); };
   const toggleWatchlist = (symbol: string) => { setWatchlist(prev => prev.includes(symbol) ? prev.filter(s => s !== symbol) : [...prev, symbol]); };
 
-  if (loading) return <div className="flex items-center justify-center h-96"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div></div>;
+  if (loading) return <div className="text-center py-20 text-white">Yükleniyor...</div>;
 
   return (
     <div className="space-y-3 max-w-full overflow-x-hidden">
-      {/* Watchlist Bar */}
+      {/* Watchlist */}
       {watchlist.length > 0 && (
         <div className="flex gap-1.5 flex-wrap">
           {watchlist.map(sym => {
@@ -74,7 +61,7 @@ const Markets: React.FC = () => {
         </div>
       )}
 
-      {/* Chart */}
+      {/* Grafik */}
       <Card className="p-2">
         <div className="flex items-center justify-between px-2 mb-2 flex-wrap gap-2">
           <h3 className="text-sm font-semibold">{selectedName} ({selectedCoin.replace('USD', '/USD')})</h3>
@@ -87,7 +74,7 @@ const Markets: React.FC = () => {
         <TradingViewChart symbol={selectedCoin} height={400} interval={timeframe} />
       </Card>
 
-      {/* Coin Table */}
+      {/* Coin Listesi */}
       <Card className="p-0 overflow-hidden">
         <div className="p-3 border-b border-[var(--color-border)]">
           <div className="relative">
@@ -98,17 +85,15 @@ const Markets: React.FC = () => {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead><tr className="text-[var(--color-text-muted)] border-b border-[var(--color-border)]"><th className="text-left py-2 px-2 w-6"></th><th className="text-left py-2 px-2">#</th><th className="text-left py-2 px-2">{t('name')}</th><th className="text-right py-2 px-2">{t('price')}</th><th className="text-right py-2 px-2">{t('change_24h')}</th><th className="text-right py-2 px-2 hidden md:table-cell">{t('market_cap')}</th><th className="text-right py-2 px-2 hidden lg:table-cell">{t('volume')}</th></tr></thead>
+            <thead><tr className="text-[var(--color-text-muted)] border-b border-[var(--color-border)]"><th className="text-left py-2 px-2 w-6"></th><th className="text-left py-2 px-2">#</th><th className="text-left py-2 px-2">Coin</th><th className="text-right py-2 px-2">Fiyat</th><th className="text-right py-2 px-2">24s Değişim</th></tr></thead>
             <tbody>
               {filtered.map((coin) => (
                 <tr key={coin.symbol} onClick={() => handleSelect(coin.symbol, coin.name)} className={`border-b border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] cursor-pointer ${selectedCoin === `${coin.symbol}USD` ? 'bg-[var(--color-accent)]/10' : ''}`}>
                   <td className="py-2 px-2" onClick={(e) => { e.stopPropagation(); toggleWatchlist(coin.symbol); }}><Star size={14} className={watchlist.includes(coin.symbol) ? 'text-yellow-400 fill-yellow-400' : 'text-[var(--color-text-muted)]'} /></td>
                   <td className="py-2 px-2 text-[var(--color-text-muted)]">{coin.cmc_rank}</td>
-                  <td className="py-2 px-2"><div className="font-medium">{coin.symbol}</div><div className="text-[var(--color-text-muted)] text-xs">{coin.name}</div></td>
-                  <td className="py-2 px-2 text-right font-medium">${coin.price < 1 ? coin.price.toFixed(6) : coin.price.toLocaleString()}</td>
-                  <td className={`py-2 px-2 text-right font-medium ${coin.change_24h >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}><div className="flex items-center justify-end gap-1">{coin.change_24h >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}{coin.change_24h.toFixed(2)}%</div></td>
-                  <td className="py-2 px-2 text-right text-[var(--color-text-secondary)] hidden md:table-cell">${(coin.market_cap / 1e9).toFixed(1)}B</td>
-                  <td className="py-2 px-2 text-right text-[var(--color-text-secondary)] hidden lg:table-cell">${(coin.volume_24h / 1e6).toFixed(0)}M</td>
+                  <td className="py-2 px-2"><div className="font-medium text-white">{coin.symbol}</div><div className="text-[var(--color-text-muted)] text-xs">{coin.name}</div></td>
+                  <td className="py-2 px-2 text-right text-white font-medium">${coin.price < 1 ? coin.price.toFixed(6) : coin.price.toLocaleString()}</td>
+                  <td className={`py-2 px-2 text-right font-medium ${coin.change_24h >= 0 ? 'text-[#03A66D]' : 'text-[#CF304A]'}`}><div className="flex items-center justify-end gap-1">{coin.change_24h >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}{coin.change_24h >= 0 ? '+' : ''}{coin.change_24h.toFixed(2)}%</div></td>
                 </tr>
               ))}
             </tbody>
