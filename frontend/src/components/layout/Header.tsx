@@ -24,6 +24,7 @@ const Header: React.FC = () => {
     { id: 'backtesting', icon: BarChart3, label: t('backtesting') },
     { id: 'settings', icon: Settings, label: t('settings') },
     { id: 'bot-control', icon: Bot, label: 'Bot Control' },
+    { id: 'trade', icon: TrendingUp, label: 'Trade' },
   ];
 
   const handleClick = (id: string) => { setActive(id); window.location.hash = id; window.dispatchEvent(new HashChangeEvent('hashchange')); setMobileOpen(false); setProfileOpen(false); };

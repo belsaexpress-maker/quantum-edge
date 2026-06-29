@@ -17,6 +17,8 @@ import Profile from './pages/Profile';
 import PriceHistoryPage from './pages/PriceHistory';
 import TradingBots from './pages/TradingBots';
 import BinanceTrade from './pages/BinanceTrade';
+import Trade from './pages/Trade';
+
 
 const App: React.FC = () => {
   const [page, setPage] = useState('dashboard');
@@ -47,6 +49,7 @@ const App: React.FC = () => {
       case 'history': return <PriceHistoryPage />;
       case 'bots': return <TradingBots />;
       case 'binance': return <BinanceTrade />;
+      case 'trade': return <Trade />;
       default: return <Dashboard />;
     }
   };
