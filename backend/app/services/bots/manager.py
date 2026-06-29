@@ -9,26 +9,41 @@ class BotManager:
     def __init__(self):
         self.bots = {}
         self.capital = 100
+        self.allocation = {
+            "grid": 0.20,
+            "dca": 0.25,
+            "scalping": 0.15,
+            "momentum": 0.15,
+            "signal": 0.15,
+            "ai": 0.10
+        }
+
+    def set_capital(self, amount: float, allocation: dict = None):
+        """Sermaye ve dağılımı ayarla"""
+        self.capital = amount
+        if allocation:
+            self.allocation = allocation
+        return {"capital": self.capital, "allocation": self.allocation}
 
     def start_all(self, symbol="BTCUSDT"):
         results = {}
         if "grid" not in self.bots:
-            self.bots["grid"] = GridBot(symbol=symbol, capital=self.capital * 0.2)
+            self.bots["grid"] = GridBot(symbol=symbol, capital=self.capital * self.allocation.get("grid", 0.2))
             results["grid"] = self.bots["grid"].run()
         if "scalping" not in self.bots:
-            self.bots["scalping"] = ScalpingBot(symbol=symbol, capital=self.capital * 0.15)
+            self.bots["scalping"] = ScalpingBot(symbol=symbol, capital=self.capital * self.allocation.get("scalping", 0.15))
             results["scalping"] = self.bots["scalping"].run()
         if "momentum" not in self.bots:
-            self.bots["momentum"] = MomentumBot(symbol=symbol, capital=self.capital * 0.15)
+            self.bots["momentum"] = MomentumBot(symbol=symbol, capital=self.capital * self.allocation.get("momentum", 0.15))
             results["momentum"] = self.bots["momentum"].run()
         if "dca" not in self.bots:
-            self.bots["dca"] = DCABot(symbol=symbol, capital=self.capital * 0.25)
+            self.bots["dca"] = DCABot(symbol=symbol, capital=self.capital * self.allocation.get("dca", 0.25))
             results["dca"] = self.bots["dca"].run()
         if "signal" not in self.bots:
-            self.bots["signal"] = SignalBot(symbol=symbol, capital=self.capital * 0.15)
+            self.bots["signal"] = SignalBot(symbol=symbol, capital=self.capital * self.allocation.get("signal", 0.15))
             results["signal"] = self.bots["signal"].run()
         if "ai" not in self.bots:
-            self.bots["ai"] = AIOptimizeBot(symbol=symbol, capital=self.capital * 0.1)
+            self.bots["ai"] = AIOptimizeBot(symbol=symbol, capital=self.capital * self.allocation.get("ai", 0.10))
             results["ai"] = self.bots["ai"].run()
         return results
 

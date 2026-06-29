@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
-from app.api import auth, market, bots, binance, exchange
+from app.api import auth, market, bots, exchange  # binance kaldırıldı
 
 app = FastAPI(title="Quantum Edge v2.0", version="2.0.0")
 
@@ -11,7 +11,6 @@ Base.metadata.create_all(bind=engine)
 app.include_router(auth.router)
 app.include_router(market.router)
 app.include_router(bots.router)
-app.include_router(binance.router)
 app.include_router(exchange.router)
 
 @app.get("/")
