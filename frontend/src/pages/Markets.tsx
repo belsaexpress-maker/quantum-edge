@@ -18,27 +18,42 @@ const Markets: React.FC = () => {
   const [timeframe, setTimeframe] = useState('60');
   const [watchlist, setWatchlist] = useState<string[]>(['BTC', 'ETH', 'SOL']);
 
+  // Coin verilerini çek
+  const fetchCoins = async () => {
+    try {
+      const res = await axios.get('http://localhost:8000/api/market/crypto?limit=100');
+      if (res.data?.data) {
+        setCoins(res.data.data);
+        setFiltered(res.data.data);
+      }
+    } catch (err) { console.error(err); } finally { setLoading(false); }
+  };
+
   useEffect(() => {
-    const fetchCoins = async () => {
-      try {
-        const res = await axios.get('http://localhost:8000/api/market/crypto?limit=100');
-        if (res.data?.data) { setCoins(res.data.data); setFiltered(res.data.data); }
-      } catch (err) { console.error(err); } finally { setLoading(false); }
-    };
     fetchCoins();
   }, []);
 
   // URL'den arama parametresini oku
   useEffect(() => {
-    const hash = window.location.hash;
-    const queryString = hash.includes('?') ? hash.split('?')[1] : '';
-    const params = new URLSearchParams(queryString);
-    const q = params.get('search');
-    if (q) setSearch(q);
+    const checkUrl = () => {
+      const hash = window.location.hash;
+      const queryString = hash.includes('?') ? hash.split('?')[1] : '';
+      const params = new URLSearchParams(queryString);
+      const q = params.get('search');
+      if (q) setSearch(q);
+    };
+    checkUrl();
+    window.addEventListener('hashchange', checkUrl);
+    return () => window.removeEventListener('hashchange', checkUrl);
   }, []);
 
+  // Arama filtresi
   useEffect(() => {
-    setFiltered(search ? coins.filter(c => c.symbol.toLowerCase().includes(search.toLowerCase()) || c.name.toLowerCase().includes(search.toLowerCase())) : coins);
+    if (search) {
+      setFiltered(coins.filter(c => c.symbol.toLowerCase().includes(search.toLowerCase()) || c.name.toLowerCase().includes(search.toLowerCase())));
+    } else {
+      setFiltered(coins);
+    }
   }, [search, coins]);
 
   const handleSelect = (symbol: string, name: string) => { setSelectedCoin(`${symbol}USD`); setSelectedName(name); };
@@ -48,6 +63,7 @@ const Markets: React.FC = () => {
 
   return (
     <div className="space-y-3 max-w-full overflow-x-hidden">
+      {/* Watchlist Bar */}
       {watchlist.length > 0 && (
         <div className="flex gap-1.5 flex-wrap">
           {watchlist.map(sym => {
@@ -58,6 +74,7 @@ const Markets: React.FC = () => {
         </div>
       )}
 
+      {/* Chart */}
       <Card className="p-2">
         <div className="flex items-center justify-between px-2 mb-2 flex-wrap gap-2">
           <h3 className="text-sm font-semibold">{selectedName} ({selectedCoin.replace('USD', '/USD')})</h3>
@@ -70,6 +87,7 @@ const Markets: React.FC = () => {
         <TradingViewChart symbol={selectedCoin} height={400} interval={timeframe} />
       </Card>
 
+      {/* Coin Table */}
       <Card className="p-0 overflow-hidden">
         <div className="p-3 border-b border-[var(--color-border)]">
           <div className="relative">

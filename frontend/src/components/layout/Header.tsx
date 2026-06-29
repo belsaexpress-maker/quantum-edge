@@ -43,7 +43,21 @@ const Header: React.FC = () => {
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg px-3 py-1.5"><Search size={14} className="text-[var(--color-text-muted)]" /><input type="text" placeholder={t('search')} onChange={(e) => { const q = e.target.value; if(q) { window.location.hash = `markets?search=${q}`; window.dispatchEvent(new HashChangeEvent('hashchange')); } }} className="bg-transparent text-xs text-white placeholder-[var(--color-text-muted)] focus:outline-none w-24 lg:w-32" /></div>
+          <div className="hidden md:flex items-center gap-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg px-3 py-1.5">
+            <Search size={14} className="text-[var(--color-text-muted)]" />
+            <input
+              type="text"
+              placeholder={t('search')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const q = (e.target as HTMLInputElement).value;
+                  window.location.hash = `markets?search=${q}`;
+                  window.dispatchEvent(new HashChangeEvent('hashchange'));
+                }
+              }}
+              className="bg-transparent text-xs text-white placeholder-[var(--color-text-muted)] focus:outline-none w-24 lg:w-32"
+            />
+          </div>
           <button className="relative p-2 text-[var(--color-text-secondary)] hover:text-white rounded-lg hover:bg-[var(--color-bg-hover)]"><Bell size={16} /><span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" /></button>
           <button onClick={() => handleClick('pricing')} className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-medium rounded-lg hover:from-blue-700 hover:to-purple-700"><ZapIcon size={12} /> {t('upgrade')}</button>
           <div className="relative">
