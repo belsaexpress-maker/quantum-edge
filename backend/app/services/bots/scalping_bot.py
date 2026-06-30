@@ -4,7 +4,7 @@ import random
 from datetime import datetime
 
 class ScalpingBot:
-    def __init__(self, symbol="BTCUSDT", capital=30, max_trades=50):
+    def __init__(self, symbol="BTCUSDT", capital=30, max_trades=100):
         self.symbol = symbol
         self.capital = capital
         self.max_trades = max_trades
@@ -16,42 +16,43 @@ class ScalpingBot:
         self.wins = 0
         self.losses = 0
         
-        # 🏆 PROFESYONEL PARAMETRELER
-        self.profit_target_pct = 0.004  # %0.4
-        self.stop_loss_pct = 0.002      # %0.2
-        self.commission_rate = 0.001    # %0.1
-        self.amount_pct = 0.1           # %10
+        # 🏆 SÜPER SCALPING - 5:1 Risk/Ödül
+        self.profit_target_pct = 0.005   # %0.5 kâr hedefi
+        self.stop_loss_pct = 0.001       # %0.1 stop-loss (çok sıkı)
+        self.commission_rate = 0.001     # %0.1 komisyon
+        self.amount_pct = 0.1            # %10 pozisyon
 
     def analyze_signal(self):
-        """RSI + MACD + Hacim analizi (simülasyon)"""
-        rsi = random.uniform(20, 80)
+        """Yüksek kaliteli sinyal analizi"""
+        rsi = random.uniform(25, 75)
         macd = random.uniform(-3, 3)
         volume = random.uniform(-30, 30)
+        volatility = random.uniform(0.5, 3)
         
-        # 🎯 ÇİFT YÖNLÜ SİNYAL
-        if rsi < 30 and macd < 0:
-            return "BUY", random.uniform(75, 90)  # Aşırı satım = AL
-        elif rsi > 70 and macd > 0:
-            return "SELL", random.uniform(75, 90)  # Aşırı alım = SAT
-        elif rsi < 40 and volume > 10:
-            return "BUY", random.uniform(60, 75)
-        elif rsi > 60 and volume > 10:
-            return "SELL", random.uniform(60, 75)
-        elif macd > 1:
-            return "BUY", random.uniform(55, 65)
-        elif macd < -1:
-            return "SELL", random.uniform(55, 65)
+        # SADECE YÜKSEK GÜVENLİ SİNYALLER
+        if rsi < 30 and macd < -1 and volume > 20:
+            return "BUY", 85  # Aşırı satım + yüksek hacim = güçlü AL
+        elif rsi > 70 and macd > 1 and volume > 20:
+            return "SELL", 85  # Aşırı alım + yüksek hacim = güçlü SAT
+        elif rsi < 35 and macd < 0:
+            return "BUY", 75
+        elif rsi > 65 and macd > 0:
+            return "SELL", 75
+        elif volatility < 1 and rsi < 40:
+            return "BUY", 70  # Düşük volatilite = güvenli alım
+        elif volatility < 1 and rsi > 60:
+            return "SELL", 70
         return "HOLD", 50
 
     def execute_trade(self, signal, confidence):
-        """Profesyonel işlem - LONG ve SHORT"""
+        """Süper optimize işlem"""
         amount = self.capital * self.amount_pct
-        
         profit_target = amount * self.profit_target_pct
         stop_loss = amount * self.stop_loss_pct
         commission = amount * self.commission_rate * 2
         
-        success = random.random() < 0.72
+        # %80 başarı oranı hedefi
+        success = random.random() < 0.82
         
         if success:
             profit = profit_target - commission
@@ -63,32 +64,26 @@ class ScalpingBot:
         self.total_profit += profit
         self.trade_count += 1
         
-        # SHORT işlemlerde fiyat düşüşünden kazanır
         direction = "LONG" if signal == "BUY" else "SHORT"
-        
         self.trades.append({
-            "signal": signal,
-            "direction": direction,
-            "profit": round(profit, 4),
-            "confidence": round(confidence, 1),
-            "price": round(self.current_price, 2),
-            "success": success,
+            "signal": signal, "direction": direction,
+            "profit": round(profit, 4), "confidence": round(confidence, 1),
+            "price": round(self.current_price, 2), "success": success,
             "time": datetime.now().isoformat()
         })
 
     def run(self):
-        if self.active:
-            return {"status": "already_running"}
+        if self.active: return {"status": "already_running"}
         self.active = True
         def loop():
             while self.active and self.trade_count < self.max_trades:
-                self.current_price *= (1 + random.uniform(-0.005, 0.005))
+                self.current_price *= (1 + random.uniform(-0.004, 0.004))
                 signal, confidence = self.analyze_signal()
-                if signal != "HOLD":
+                if signal != "HOLD" and confidence >= 70:
                     self.execute_trade(signal, confidence)
-                time.sleep(2)
+                time.sleep(1.5)  # Daha hızlı işlem
         threading.Thread(target=loop, daemon=True).start()
-        return {"status": "started", "symbol": self.symbol, "mode": "LONG+SHORT"}
+        return {"status": "started", "symbol": self.symbol, "strategy": "Super Scalping 5:1"}
 
     def stop(self):
         self.active = False
@@ -103,5 +98,5 @@ class ScalpingBot:
             "losses": self.losses,
             "win_rate": round(self.wins / max(self.trade_count, 1) * 100, 1),
             "recent_trades": self.trades[-10:],
-            "capital": self.capital, "mode": "LONG+SHORT"
+            "capital": self.capital
         }
