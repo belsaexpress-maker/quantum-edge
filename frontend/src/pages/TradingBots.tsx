@@ -1,89 +1,253 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Card from '../components/ui/Card';
-import { Bot, Zap, Grid3X3, BarChart3, TrendingUp } from 'lucide-react';
-import { useLang } from '../context/LanguageContext';
+import { Play, Square, RefreshCw, Bot, TrendingUp, Zap, Target, Settings } from 'lucide-react';
+
+const API_URL = 'http://localhost:8000/api/bots';
 
 const TradingBots: React.FC = () => {
-  const { t } = useLang();
-  const [symbol, setSymbol] = useState('BTC');
-  const [price, setPrice] = useState('60000');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('all');
+  const [status, setStatus] = useState<any>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [symbol, setSymbol] = useState('BTCUSDT');
+  
+  // Grid bot ayarları
+  const [gridCapital, setGridCapital] = useState(50);
+  const [gridLevels, setGridLevels] = useState(5);
+  const [gridSpacing, setGridSpacing] = useState(0.01);
+  
+  // Scalping bot ayarları
+  const [scalpCapital, setScalpCapital] = useState(30);
+  const [scalpMaxTrades, setScalpMaxTrades] = useState(50);
+  
+  // Momentum bot ayarları
+  const [momCapital, setMomCapital] = useState(20);
 
-  const fetchBot = async (endpoint: string) => {
-    setLoading(true);
+  const fetchStatus = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/bots/${endpoint}/${symbol}?price=${price}`);
-      setResult({ type: endpoint, data: res.data });
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+      const res = await axios.get(`${API_URL}/status`);
+      setStatus(res.data);
+    } catch (err) {}
   };
 
-  const tabs = [
-    { id: 'all', icon: Bot, label: t('all_bots') },
-    { id: 'scalping', icon: Zap, label: t('scalping') },
-    { id: 'grid', icon: Grid3X3, label: t('grid') },
-    { id: 'dca', icon: BarChart3, label: t('dca') },
-    { id: 'momentum', icon: TrendingUp, label: t('momentum') },
+  useEffect(() => {
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const startBot = async (bot: string) => {
+    setLoading({ ...loading, [bot]: true });
+    try {
+      let url = '';
+      if (bot === 'grid') url = `${API_URL}/start/grid?symbol=${symbol}&capital=${gridCapital}&grid_levels=${gridLevels}&spacing=${gridSpacing}`;
+      else if (bot === 'scalping') url = `${API_URL}/start/scalping?symbol=${symbol}&capital=${scalpCapital}&max_trades=${scalpMaxTrades}`;
+      else if (bot === 'momentum') url = `${API_URL}/start/momentum?symbol=${symbol}&capital=${momCapital}`;
+      await axios.post(url);
+      fetchStatus();
+    } catch (err) {}
+    setLoading({ ...loading, [bot]: false });
+  };
+
+  const stopBot = async (bot: string) => {
+    setLoading({ ...loading, [bot]: true });
+    try {
+      await axios.post(`${API_URL}/stop/${bot}`);
+      fetchStatus();
+    } catch (err) {}
+    setLoading({ ...loading, [bot]: false });
+  };
+
+  const stopAll = async () => {
+    setLoading({ ...loading, all: true });
+    try {
+      await axios.post(`${API_URL}/stop/all`);
+      fetchStatus();
+    } catch (err) {}
+    setLoading({ ...loading, all: false });
+  };
+
+  const botConfigs = [
+    {
+      id: 'grid',
+      name: 'Grid Bot',
+      icon: TrendingUp,
+      color: 'text-green-400',
+      bg: 'bg-green-500/20',
+      risk: '🟢 Düşük Risk',
+      bestFor: 'Yatay piyasa',
+      expected: '$8-15/gün',
+      capital: gridCapital,
+      setCapital: setGridCapital,
+      params: [
+        { label: 'Grid Seviyesi', value: gridLevels, set: setGridLevels, type: 'number' },
+        { label: 'Aralık (%)', value: gridSpacing * 100, set: (v: number) => setGridSpacing(v / 100), type: 'number' },
+      ],
+    },
+    {
+      id: 'scalping',
+      name: 'AI Scalping',
+      icon: Zap,
+      color: 'text-purple-400',
+      bg: 'bg-purple-500/20',
+      risk: '🟡 Orta Risk',
+      bestFor: 'Her piyasa',
+      expected: '$10-25/gün',
+      capital: scalpCapital,
+      setCapital: setScalpCapital,
+      params: [
+        { label: 'Max İşlem', value: scalpMaxTrades, set: setScalpMaxTrades, type: 'number' },
+      ],
+    },
+    {
+      id: 'momentum',
+      name: 'Momentum',
+      icon: Target,
+      color: 'text-orange-400',
+      bg: 'bg-orange-500/20',
+      risk: '🔴 Yüksek Risk',
+      bestFor: 'Trend piyasası',
+      expected: '$15-40/gün',
+      capital: momCapital,
+      setCapital: setMomCapital,
+      params: [],
+    },
   ];
 
   return (
-    <div className="space-y-3">
-      <h2 className="text-base font-semibold flex items-center gap-2"><Bot size={18} className="text-[var(--color-accent)]" /> {t('trading_bots')}</h2>
-      <Card className="p-3">
-        <div className="flex gap-2 flex-wrap">
-          <select value={symbol} onChange={e => setSymbol(e.target.value)} className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-white">
-            {['BTC','ETH','SOL','BNB','ADA','XRP','DOGE'].map(s => <option key={s}>{s}</option>)}
+    <div className="space-y-3 max-w-full overflow-x-hidden">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-base font-semibold flex items-center gap-2"><Bot size={18} className="text-[var(--color-accent)]" /> Bot Kontrol Paneli</h2>
+        <div className="flex items-center gap-2">
+          <select value={symbol} onChange={e => setSymbol(e.target.value)} className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-xs text-white">
+            {['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','ADAUSDT','XRPUSDT','DOGEUSDT'].map(s => <option key={s}>{s}</option>)}
           </select>
-          <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder={t('price')} className="w-24 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-white" />
+          <button onClick={stopAll} disabled={loading.all} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700">
+            <Square size={14} /> Tümünü Durdur
+          </button>
         </div>
-        <div className="flex gap-1.5 mt-2 flex-wrap">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => { setActiveTab(tab.id); fetchBot(tab.id); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${activeTab === tab.id ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-bg-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'}`}>
-              <tab.icon size={14} />{tab.label}
-            </button>
-          ))}
+      </div>
+
+      {/* Özet Kartları */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <Card className="p-3 text-center">
+          <div className="text-xs text-[var(--color-text-muted)]">Aktif Bot</div>
+          <div className="text-xl font-bold text-[var(--color-accent)]">{status.active_bots || 0}</div>
+        </Card>
+        <Card className="p-3 text-center">
+          <div className="text-xs text-[var(--color-text-muted)]">Toplam Kâr</div>
+          <div className={`text-xl font-bold ${(status.total_profit || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            ${(status.total_profit || 0).toFixed(2)}
+          </div>
+        </Card>
+        <Card className="p-3 text-center">
+          <div className="text-xs text-[var(--color-text-muted)]">Sembol</div>
+          <div className="text-lg font-bold">{symbol.replace('USDT', '/USDT')}</div>
+        </Card>
+        <Card className="p-3 text-center">
+          <div className="text-xs text-[var(--color-text-muted)]">Toplam Sermaye</div>
+          <div className="text-lg font-bold">${gridCapital + scalpCapital + momCapital}</div>
+        </Card>
+      </div>
+
+      {/* Bot Kartları */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {botConfigs.map(bot => {
+          const data = status[bot.id] || {};
+          const isActive = data.active;
+          return (
+            <Card key={bot.id} className={`p-3 ${isActive ? 'border-[var(--color-accent)]/50' : ''}`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className={`w-8 h-8 rounded-lg ${bot.bg} flex items-center justify-center`}>
+                    <bot.icon size={18} className={bot.color} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold">{bot.name}</h3>
+                    <span className={`w-2 h-2 rounded-full inline-block mr-1 ${isActive ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
+                    <span className="text-xs text-[var(--color-text-muted)]">{isActive ? 'Çalışıyor' : 'Durdu'}</span>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  {!isActive ? (
+                    <button onClick={() => startBot(bot.id)} disabled={loading[bot.id]}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700">
+                      <Play size={12} /> Başlat
+                    </button>
+                  ) : (
+                    <button onClick={() => stopBot(bot.id)} disabled={loading[bot.id]}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700">
+                      <Square size={12} /> Durdur
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Ayarlar */}
+              <div className="space-y-2 mb-3">
+                <div>
+                  <label className="text-xs text-[var(--color-text-muted)]">Sermaye (USDT)</label>
+                  <input type="number" value={bot.capital} onChange={e => bot.setCapital(parseFloat(e.target.value) || 0)}
+                    disabled={isActive}
+                    className="w-full mt-0.5 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded px-3 py-1.5 text-xs text-white disabled:opacity-50" />
+                </div>
+                {bot.params.map((param: any) => (
+                  <div key={param.label}>
+                    <label className="text-xs text-[var(--color-text-muted)]">{param.label}</label>
+                    <input type={param.type} value={param.value} onChange={e => param.set(parseFloat(e.target.value) || 0)}
+                      disabled={isActive}
+                      className="w-full mt-0.5 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded px-3 py-1.5 text-xs text-white disabled:opacity-50" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Canlı Durum */}
+              {isActive && (
+                <div className="bg-[var(--color-bg-primary)] rounded-lg p-2 space-y-1 text-xs">
+                  <div className="flex justify-between"><span>İşlem:</span><span className="font-bold">{data.trade_count || data.trades || 0}</span></div>
+                  <div className="flex justify-between"><span>Kazanma:</span><span className="font-bold">{data.win_rate || 0}%</span></div>
+                  <div className="flex justify-between"><span>Kâr:</span><span className={`font-bold ${(data.total_profit || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>${(data.total_profit || 0).toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span>Fiyat:</span><span className="font-bold">${data.current_price?.toFixed(2) || '0'}</span></div>
+                </div>
+              )}
+
+              {/* Bilgi */}
+              <div className="mt-2 text-xs text-[var(--color-text-muted)]">
+                <div>{bot.risk}</div>
+                <div>Beklenen: {bot.expected}</div>
+                <div>En iyi: {bot.bestFor}</div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Son İşlemler */}
+      <Card className="p-0 overflow-hidden">
+        <div className="p-3 border-b border-[var(--color-border)] flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Son İşlemler</h3>
+          <button onClick={fetchStatus} className="flex items-center gap-1 text-xs text-[var(--color-accent)]"><RefreshCw size={12} /> Yenile</button>
+        </div>
+        <div className="overflow-x-auto max-h-60 overflow-y-auto">
+          <table className="w-full text-xs">
+            <thead><tr className="text-[var(--color-text-muted)] border-b border-[var(--color-border)]"><th className="py-2 px-3 text-left">Bot</th><th className="py-2 px-3 text-left">Tip</th><th className="py-2 px-3 text-right">Kâr ($)</th><th className="py-2 px-3 text-right">Zaman</th></tr></thead>
+            <tbody>
+              {Object.entries(status).filter(([k]) => ['grid','scalping','momentum'].includes(k)).map(([name, data]: any) =>
+                (data?.recent_trades || data?.trades || []).slice(-5).reverse().map((trade: any, i: number) => (
+                  <tr key={`${name}-${i}`} className="border-b border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]">
+                    <td className="py-2 px-3 font-medium capitalize">{name}</td>
+                    <td className="py-2 px-3">{trade.signal || trade.type || '-'}</td>
+                    <td className={`py-2 px-3 text-right font-bold ${(trade.profit || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>${(trade.profit || 0).toFixed(2)}</td>
+                    <td className="py-2 px-3 text-right text-[var(--color-text-muted)]">{trade.time ? new Date(trade.time).toLocaleTimeString() : '-'}</td>
+                  </tr>
+                ))
+              )}
+              {(!status.grid?.recent_trades && !status.scalping?.recent_trades && !status.momentum?.recent_trades) && (
+                <tr><td colSpan={4} className="text-center py-4 text-[var(--color-text-muted)]">Henüz işlem yok. Bir bot başlatın.</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </Card>
-
-      {loading && <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div></div>}
-
-      {result && !loading && (
-        <div className="space-y-3">
-          {result.data?.strategies ? (
-            Object.entries(result.data.strategies).map(([key, strat]: any) => (
-              <Card key={key} className="p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-bold">{strat.strategy}</h3>
-                  <span className="text-xs px-2 py-0.5 rounded bg-[var(--color-accent)]/20 text-[var(--color-accent)]">{strat.risk} Risk</span>
-                </div>
-                {strat.signal && (
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`px-3 py-1 rounded-lg text-sm font-bold ${strat.signal?.includes('BUY') ? 'bg-green-500/20 text-green-400' : strat.signal?.includes('SELL') ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>{strat.signal}</span>
-                    {strat.confidence && <span className="text-sm">{t('confidence')}: <b>{strat.confidence}%</b></span>}
-                  </div>
-                )}
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  {strat.entry_price && <div className="p-2 bg-[var(--color-bg-primary)] rounded"><div className="text-[var(--color-text-muted)]">{t('entry')}</div><div className="font-bold">${strat.entry_price}</div></div>}
-                  {strat.target_price && <div className="p-2 bg-[var(--color-bg-primary)] rounded"><div className="text-[var(--color-text-muted)]">{t('target')}</div><div className="font-bold text-[var(--color-success)]">${strat.target_price}</div></div>}
-                  {strat.stop_loss && <div className="p-2 bg-[var(--color-bg-primary)] rounded"><div className="text-[var(--color-text-muted)]">{t('stop_loss')}</div><div className="font-bold text-[var(--color-danger)]">${strat.stop_loss}</div></div>}
-                </div>
-                <div className="text-xs text-[var(--color-text-muted)] mt-2">{t('best_for')}: {strat.best_for || 'All markets'}</div>
-              </Card>
-            ))
-          ) : (
-            <Card className="p-3">
-              <h3 className="text-sm font-bold mb-2">{result.data?.strategy}</h3>
-              <p className="text-sm text-[var(--color-text-secondary)]">{result.data?.best_for || 'All markets'}</p>
-            </Card>
-          )}
-        </div>
-      )}
     </div>
   );
 };
