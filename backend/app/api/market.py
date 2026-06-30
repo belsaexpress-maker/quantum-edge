@@ -5,6 +5,7 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.services.news_service import get_live_news
 from app.services.world_market_service import get_world_prices
+from app.services.analysis import analyze_symbol, analyze_all_symbols, SYMBOLS
 from app.models.asset import PriceHistory
 from datetime import datetime, timedelta
 import random
@@ -72,78 +73,62 @@ def get_news():
 def get_world_markets():
     return {"markets": get_world_prices()}
 
-from app.services.binance_service import get_live_prices as get_binance_prices, get_balance, place_order as place_binance_order
-
-@router.get("/binance/live")
-def binance_live():
-    return get_binance_prices()
-
-@router.get("/binance/balance")
-def binance_balance():
-    return get_balance()
-
-@router.post("/binance/order")
-def binance_order(symbol: str, side: str, quantity: float):
-    return place_binance_order(symbol, side, quantity)
-
-from app.services.gateio_service import get_gateio_prices, search_gateio_coins, start_gateio_service
-
 @router.get("/gateio/all")
 def gateio_all():
+    from app.services.gateio_service import get_gateio_prices
     prices = get_gateio_prices()
     return {"count": len(prices), "data": prices}
 
 @router.get("/gateio/search")
 def gateio_search(q: str = ""):
+    from app.services.gateio_service import search_gateio_coins
     if not q:
         return {"count": 0, "data": {}}
     results = search_gateio_coins(q)
     return {"count": len(results), "data": results}
+
+@router.get("/gateio/balance")
+def gateio_balance():
+    from app.services.gateio_service import get_gateio_balance
+    return get_gateio_balance()
+
+@router.post("/gateio/order")
+def gateio_order(symbol: str, side: str, quantity: float):
+    from app.services.gateio_service import place_gateio_order
+    return place_gateio_order(symbol.upper(), side.upper(), quantity)
+
+# AI Sinyal endpoint'leri
+@router.get("/ai-signals/{symbol}")
+def get_ai_signal(symbol: str):
+    result = analyze_symbol(symbol.upper() + "USDT")
+    return result
+
+@router.get("/ai-signals")
+def get_all_signals():
+    results = analyze_all_symbols()
+    return {"count": len(results), "signals": results}
 
 @router.get("/ai-analysis/{symbol}")
 def ai_analysis(symbol: str):
-    """AI analizi - gerçek fiyatla"""
     from app.services.binance_service import get_real_price
-    import random
-    
     price = get_real_price(symbol.upper()) or random.uniform(100, 60000)
     rsi = random.uniform(25, 75)
     macd = random.uniform(-3, 3)
-    
-    if rsi < 35 and macd < 0:
-        signal, confidence = "BUY", 80
-    elif rsi > 65 and macd > 0:
-        signal, confidence = "SELL", 80
-    elif rsi < 45:
-        signal, confidence = "BUY", 65
-    elif rsi > 55:
-        signal, confidence = "SELL", 65
-    else:
-        signal, confidence = "HOLD", 50
-    
-    return {
-        "symbol": symbol.upper(),
-        "price": round(price, 2),
-        "signal": signal,
-        "confidence": confidence,
-        "indicators": {
-            "rsi": round(rsi, 1),
-            "macd": round(macd, 2),
-        },
-        "support": round(price * 0.95, 2),
-        "resistance": round(price * 1.05, 2),
-        "summary": f"AI {signal} sinyali verdi (%{confidence} güven). RSI: {rsi:.1f}"
-    }
-from app.services.gateio_service import get_gateio_prices, search_gateio_coins, start_gateio_service
+    if rsi < 35 and macd < 0: signal, confidence = "BUY", 80
+    elif rsi > 65 and macd > 0: signal, confidence = "SELL", 80
+    elif rsi < 45: signal, confidence = "BUY", 65
+    elif rsi > 55: signal, confidence = "SELL", 65
+    else: signal, confidence = "HOLD", 50
+    return {"symbol": symbol.upper(), "price": round(price, 2), "signal": signal, "confidence": confidence, "indicators": {"rsi": round(rsi, 1), "macd": round(macd, 2)}, "support": round(price * 0.95, 2), "resistance": round(price * 1.05, 2), "summary": f"AI {signal} sinyali verdi (%{confidence} güven)."}
 
-@router.get("/gateio/all")
-def gateio_all():
-    prices = get_gateio_prices()
-    return {"count": len(prices), "data": prices}
+# AI Sinyal endpoint'leri
+from app.services.analysis import analyze_symbol, analyze_all_symbols
 
-@router.get("/gateio/search")
-def gateio_search(q: str = ""):
-    if not q:
-        return {"count": 0, "data": {}}
-    results = search_gateio_coins(q)
-    return {"count": len(results), "data": results}
+@router.get("/ai-signals/{symbol}")
+def get_ai_signal(symbol: str):
+    return analyze_symbol(symbol.upper() + "USDT")
+
+@router.get("/ai-signals")
+def get_all_signals():
+    results = analyze_all_symbols()
+    return {"count": len(results), "signals": results}

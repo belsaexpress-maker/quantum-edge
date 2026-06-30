@@ -20,6 +20,7 @@ import BinanceTrade from './pages/BinanceTrade';
 import Trade from './pages/Trade';
 import ConnectExchange from './pages/ConnectExchange';
 import ProTrade from './pages/ProTrade';
+import AISignalPanel from './pages/AISignalPanel';
 
 
 const App: React.FC = () => {

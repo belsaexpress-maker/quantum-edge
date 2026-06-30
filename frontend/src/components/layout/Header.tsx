@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, TrendingUp, Newspaper, Brain, Briefcase, Bell, Search, Menu, X, ChevronDown, User, Settings, LogOut, BarChart3, Sparkles, Bot, Wallet, Globe, Link } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Newspaper, Brain, Briefcase, Bell, Search, Menu, X, ChevronDown, User, Settings, LogOut, Bot } from 'lucide-react';
 import { useLang } from '../../context/LanguageContext';
 
 const Header: React.FC = () => {
@@ -12,21 +12,14 @@ const Header: React.FC = () => {
 
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t('dashboard') },
+    { id: 'pro-trade', icon: TrendingUp, label: 'Trade' },
     { id: 'markets', icon: TrendingUp, label: t('markets') },
-    { id: 'world', icon: Globe, label: 'World' },
+    { id: 'ai-panel', icon: Brain, label: 'AI Panel' },
     { id: 'ai-signals', icon: Brain, label: t('ai') },
-    { id: 'ai-analysis', icon: Sparkles, label: 'AI Analysis' },
+    { id: 'bots', icon: Bot, label: 'Bots' },
     { id: 'news', icon: Newspaper, label: t('news') },
     { id: 'portfolio', icon: Briefcase, label: t('portfolio') },
-    { id: 'alerts', icon: Bell, label: t('alerts') },
-    { id: 'bots', icon: Bot, label: 'Bots' },
-    { id: 'binance', icon: Wallet, label: 'Trade' },
-    { id: 'backtesting', icon: BarChart3, label: t('backtesting') },
-    { id: 'settings', icon: Settings, label: t('settings') },
-    { id: 'bot-control', icon: Bot, label: 'Bot Control' },
-    { id: 'trade', icon: TrendingUp, label: 'Trade' },
-    { id: 'connect-exchange', icon: Link, label: 'Borsa Bağla' },
-    { id: 'pro-trade', icon: TrendingUp, label: 'Trade Pro' },
+    { id: 'settings', icon: Settings, label: t('settings') }
   ];
 
   const handleClick = (id: string) => { setActive(id); window.location.hash = id; window.dispatchEvent(new HashChangeEvent('hashchange')); setMobileOpen(false); setProfileOpen(false); };
@@ -45,21 +38,7 @@ const Header: React.FC = () => {
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg px-3 py-1.5">
-            <Search size={14} className="text-[var(--color-text-muted)]" />
-            <input
-              type="text"
-              placeholder={t('search')}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const q = (e.target as HTMLInputElement).value;
-                  window.location.hash = `markets?search=${q}`;
-                  window.dispatchEvent(new HashChangeEvent('hashchange'));
-                }
-              }}
-              className="bg-transparent text-xs text-white placeholder-[var(--color-text-muted)] focus:outline-none w-24 lg:w-32"
-            />
-          </div>
+          <div className="hidden md:flex items-center gap-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg px-3 py-1.5"><Search size={14} className="text-[var(--color-text-muted)]" /><input type="text" placeholder={t('search')} className="bg-transparent text-xs text-white placeholder-[var(--color-text-muted)] focus:outline-none w-24 lg:w-32" /></div>
           <button className="relative p-2 text-[var(--color-text-secondary)] hover:text-white rounded-lg hover:bg-[var(--color-bg-hover)]"><Bell size={16} /><span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" /></button>
           <button onClick={() => handleClick('pricing')} className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-medium rounded-lg hover:from-blue-700 hover:to-purple-700"><ZapIcon size={12} /> {t('upgrade')}</button>
           <div className="relative">

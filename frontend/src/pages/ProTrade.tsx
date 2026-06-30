@@ -8,6 +8,7 @@ const API_URL = 'http://localhost:8000/api';
 const ProTrade: React.FC = () => {
   const [symbol, setSymbol] = useState('BTC');
   const [prices, setPrices] = useState<any>({});
+  const [balance, setBalance] = useState<any>({});
   const [side, setSide] = useState<'BUY' | 'SELL'>('BUY');
   const [quantity, setQuantity] = useState('');
   const [msg, setMsg] = useState('');
@@ -16,6 +17,7 @@ const ProTrade: React.FC = () => {
   const [flash, setFlash] = useState<Set<string>>(new Set());
   const [favorites, setFavorites] = useState<Set<string>>(new Set(['BTC','ETH','SOL','BNB','ADA']));
 
+  // Canlı fiyatları çek (1 saniyede bir)
   useEffect(() => {
     const fetchPrices = async () => {
       try {
@@ -33,10 +35,18 @@ const ProTrade: React.FC = () => {
       } catch (err) {}
     };
     fetchPrices();
-    const interval = setInterval(fetchPrices, 5000);
+    const interval = setInterval(fetchPrices, 1000);
     return () => clearInterval(interval);
   }, []);
 
+  // Gerçek bakiyeyi çek
+  useEffect(() => {
+    axios.get(`${API_URL}/market/gateio/balance`)
+      .then(res => setBalance(res.data))
+      .catch(() => {});
+  }, []);
+
+  // Arama
   useEffect(() => {
     if (search.length >= 2) {
       axios.get(`${API_URL}/market/gateio/search?q=${search}`)
@@ -56,18 +66,21 @@ const ProTrade: React.FC = () => {
     });
   };
 
+  // Gerçek Gate.io emri
   const handleOrder = async () => {
     if (!quantity) return;
     try {
-      const res = await axios.post(`${API_URL}/market/binance/order?symbol=${symbol}USDT&side=${side}&quantity=${quantity}`);
-      setMsg(res.data.success ? '✅ ' + res.data.message : '❌ ' + res.data.error);
-    } catch (err) { setMsg('❌ Hata'); }
+      const res = await axios.post(`${API_URL}/market/gateio/order?symbol=${symbol}&side=${side}&quantity=${quantity}`);
+      setMsg(res.data.success ? '✅ Gerçek emir verildi! ID: ' + JSON.stringify(res.data.order) : '❌ ' + res.data.error);
+    } catch (err: any) {
+      setMsg('❌ ' + (err.response?.data?.detail || 'Hata'));
+    }
   };
 
   const current = prices[symbol] || { price: 0, change_24h: 0, high_24h: 0, low_24h: 0, volume: 0 };
   const total = quantity ? (parseFloat(quantity) * current.price).toFixed(2) : '0.00';
 
-  const displayCoins = search.length >= 2 
+  const displayCoins = search.length >= 2
     ? Object.entries(searchResults)
     : Object.entries(prices).filter(([sym]) => favorites.has(sym)).concat(
         Object.entries(prices).filter(([sym]) => !favorites.has(sym)).slice(0, 20)
@@ -135,39 +148,20 @@ const ProTrade: React.FC = () => {
           {msg && <div className="text-xs mt-2 text-center">{msg}</div>}
         </div>
 
-        {/* Bakiye */}
+        {/* Gerçek Bakiye */}
         <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl p-3 mt-3">
-          <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Wallet size={16} /> Bakiye</h3>
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between"><span className="font-bold">USDT</span><span>10,000.00</span></div>
-            <div className="flex justify-between"><span className="font-bold">BTC</span><span>0.15</span></div>
-            <div className="flex justify-between"><span className="font-bold">ETH</span><span>2.50</span></div>
-          </div>
-        </div>
-
-        {/* Emir Defteri */}
-        <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl p-3 mt-3 text-xs">
-          <h3 className="text-sm font-semibold mb-2">Emir Defteri</h3>
-          <div className="space-y-1">
-            <div className="flex justify-between text-red-400"><span>60,120.50</span><span>0.524</span></div>
-            <div className="flex justify-between text-red-400"><span>60,110.25</span><span>1.203</span></div>
-            <div className="flex justify-between text-red-400"><span>60,100.00</span><span>0.891</span></div>
-            <div className="flex justify-between font-bold text-[var(--color-accent)] py-1 border-y border-[var(--color-border)]"><span>{current.price?.toFixed(2)}</span><span>↕</span></div>
-            <div className="flex justify-between text-green-400"><span>60,090.75</span><span>0.445</span></div>
-            <div className="flex justify-between text-green-400"><span>60,080.30</span><span>1.678</span></div>
-            <div className="flex justify-between text-green-400"><span>60,070.00</span><span>2.100</span></div>
-          </div>
-        </div>
-
-        {/* Son İşlemler */}
-        <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl p-3 mt-3 text-xs">
-          <h3 className="text-sm font-semibold mb-2">Son İşlemler</h3>
-          <div className="space-y-1">
-            <div className="flex justify-between"><span className="text-green-400">60,102.50</span><span>0.124</span><span className="text-[var(--color-text-muted)]">12:34:56</span></div>
-            <div className="flex justify-between"><span className="text-red-400">60,098.75</span><span>0.056</span><span className="text-[var(--color-text-muted)]">12:34:55</span></div>
-            <div className="flex justify-between"><span className="text-green-400">60,101.20</span><span>0.789</span><span className="text-[var(--color-text-muted)]">12:34:54</span></div>
-            <div className="flex justify-between"><span className="text-green-400">60,100.00</span><span>1.500</span><span className="text-[var(--color-text-muted)]">12:34:53</span></div>
-            <div className="flex justify-between"><span className="text-red-400">60,095.30</span><span>0.234</span><span className="text-[var(--color-text-muted)]">12:34:52</span></div>
+          <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Wallet size={16} /> Gerçek Bakiye</h3>
+          <div className="space-y-1 text-xs max-h-40 overflow-y-auto">
+            {Object.entries(balance).length > 0 ? (
+              Object.entries(balance).slice(0, 15).map(([asset, amount]: any) => (
+                <div key={asset} className="flex justify-between">
+                  <span className="font-bold">{asset}</span>
+                  <span>{typeof amount === 'number' ? amount.toFixed(4) : amount}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-[var(--color-text-muted)]">Bakiye yükleniyor...</div>
+            )}
           </div>
         </div>
       </div>
