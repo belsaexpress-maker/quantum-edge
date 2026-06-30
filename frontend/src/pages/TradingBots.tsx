@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Card from '../components/ui/Card';
-import { Bot, TrendingUp, Zap, Target, Grid3X3, BarChart3, Play, Square, RefreshCw } from 'lucide-react';
+import { Bot, TrendingUp, Zap, Target, Grid3X3, BarChart3, Play, Square, RefreshCw, Activity } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 
 const TradingBots: React.FC = () => {
