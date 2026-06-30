@@ -49,7 +49,7 @@ const AISignals: React.FC = () => {
         <h3 className="text-base font-semibold mb-2 flex items-center gap-1.5"><Brain size={16} className="text-purple-400" /> {t('ai')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {signals.map((s) => { const col = c(s.signal); return (
-            <Card key={s.symbol} className={`p-3 cursor-pointer border-l-2 ${col.border} hover:border-[var(--color-accent)]/50`} onClick={() => { window.location.hash = 'markets'; window.dispatchEvent(new HashChangeEvent('hashchange')); }}>
+            <Card key={s.symbol} className={`p-3 cursor-pointer border-l-2 ${col.border} hover:border-[var(--color-accent)]/50`} onClick={() => { window.location.hash = 'ai-analysis'; window.dispatchEvent(new HashChangeEvent('hashchange')); }}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold">{s.symbol[0]}</div><div><div className="font-bold text-sm">{s.symbol}</div><div className="text-xs text-[var(--color-text-muted)] hidden sm:block">{s.name}</div></div></div>
                 <span className={`px-2 py-0.5 rounded text-xs font-bold ${col.bg} ${col.text}`}>{s.signal}</span>
