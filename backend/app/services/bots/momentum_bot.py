@@ -16,32 +16,27 @@ class MomentumBot:
         self.wins = 0
         self.losses = 0
         
-        # 🏆 PROFESYONEL MOMENTUM PARAMETRELERİ
-        self.profit_target_pct = 0.02   # %2 kâr hedefi
-        self.stop_loss_pct = 0.01       # %1 stop-loss
-        self.commission_rate = 0.001    # %0.1 komisyon
-        self.trend_threshold = 1.0      # Düşük eşik = daha fazla sinyal
+        self.profit_target_pct = 0.02
+        self.stop_loss_pct = 0.01
+        self.commission_rate = 0.001
 
     def detect_trend(self):
-        momentum = random.uniform(-3, 3)
-        if momentum > self.trend_threshold:
-            return "BULLISH", min(60 + abs(momentum) * 10, 90)
-        elif momentum < -self.trend_threshold:
-            return "BEARISH", min(60 + abs(momentum) * 10, 90)
+        momentum = random.uniform(-4, 4)
+        if momentum > 1.0: return "BULLISH", min(60 + abs(momentum) * 8, 90)
+        elif momentum < -1.0: return "BEARISH", min(60 + abs(momentum) * 8, 90)
         return "NEUTRAL", 50
 
     def open_position(self, trend, confidence):
         if trend == "BULLISH":
             self.position = {
-                "type": "LONG",
-                "entry": self.current_price,
+                "type": "LONG", "entry": self.current_price,
                 "target": self.current_price * (1 + self.profit_target_pct),
                 "stop": self.current_price * (1 - self.stop_loss_pct)
             }
         else:
+            # 🎯 SHORT pozisyon - düşüşten kazanır
             self.position = {
-                "type": "SHORT",
-                "entry": self.current_price,
+                "type": "SHORT", "entry": self.current_price,
                 "target": self.current_price * (1 - self.profit_target_pct),
                 "stop": self.current_price * (1 + self.stop_loss_pct)
             }
@@ -52,6 +47,7 @@ class MomentumBot:
         if self.position["type"] == "LONG":
             profit_pct = (self.current_price - self.position["entry"]) / self.position["entry"]
         else:
+            # SHORT: fiyat düşünce kazanır
             profit_pct = (self.position["entry"] - self.current_price) / self.position["entry"]
         
         gross_profit = self.capital * profit_pct
@@ -60,7 +56,6 @@ class MomentumBot:
         
         self.total_profit += net_profit
         self.trade_count += 1
-        
         if net_profit > 0: self.wins += 1
         else: self.losses += 1
         
@@ -77,15 +72,11 @@ class MomentumBot:
     def check_stop_target(self):
         if not self.position: return
         if self.position["type"] == "LONG":
-            if self.current_price >= self.position["target"]:
-                self.close_position("target")
-            elif self.current_price <= self.position["stop"]:
-                self.close_position("stop")
+            if self.current_price >= self.position["target"]: self.close_position("target")
+            elif self.current_price <= self.position["stop"]: self.close_position("stop")
         else:
-            if self.current_price <= self.position["target"]:
-                self.close_position("target")
-            elif self.current_price >= self.position["stop"]:
-                self.close_position("stop")
+            if self.current_price <= self.position["target"]: self.close_position("target")
+            elif self.current_price >= self.position["stop"]: self.close_position("stop")
 
     def run(self):
         if self.active:
@@ -93,16 +84,15 @@ class MomentumBot:
         self.active = True
         def loop():
             while self.active:
-                self.current_price *= (1 + random.uniform(-0.008, 0.008))
-                if self.position:
-                    self.check_stop_target()
+                self.current_price *= (1 + random.uniform(-0.01, 0.01))
+                if self.position: self.check_stop_target()
                 else:
                     trend, confidence = self.detect_trend()
                     if trend != "NEUTRAL" and confidence > 60:
                         self.open_position(trend, confidence)
                 time.sleep(5)
         threading.Thread(target=loop, daemon=True).start()
-        return {"status": "started", "symbol": self.symbol, "capital": self.capital}
+        return {"status": "started", "symbol": self.symbol, "mode": "LONG+SHORT"}
 
     def stop(self):
         if self.position: self.close_position("stopped")
@@ -118,6 +108,7 @@ class MomentumBot:
             "losses": self.losses,
             "win_rate": round(self.wins / max(self.trade_count, 1) * 100, 1),
             "has_position": self.position is not None,
-            "trades": len(self.trades), "recent_trades": self.trades[-10:],
-            "capital": self.capital
+            "position_type": self.position["type"] if self.position else None,
+            "recent_trades": self.trades[-10:],
+            "capital": self.capital, "mode": "LONG+SHORT"
         }
