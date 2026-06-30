@@ -19,6 +19,7 @@ import TradingBots from './pages/TradingBots';
 import BinanceTrade from './pages/BinanceTrade';
 import Trade from './pages/Trade';
 import ConnectExchange from './pages/ConnectExchange';
+import ProTrade from './pages/ProTrade';
 
 
 const App: React.FC = () => {
@@ -52,6 +53,7 @@ const App: React.FC = () => {
       case 'binance': return <BinanceTrade />;
       case 'trade': return <Trade />;
       case 'connect-exchange': return <ConnectExchange />;
+      case 'pro-trade': return <ProTrade />;
       default: return <Dashboard />;
     }
   };

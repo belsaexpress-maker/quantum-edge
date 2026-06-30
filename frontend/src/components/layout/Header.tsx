@@ -26,6 +26,7 @@ const Header: React.FC = () => {
     { id: 'bot-control', icon: Bot, label: 'Bot Control' },
     { id: 'trade', icon: TrendingUp, label: 'Trade' },
     { id: 'connect-exchange', icon: Link, label: 'Borsa Bağla' },
+    { id: 'pro-trade', icon: TrendingUp, label: 'Trade Pro' },
   ];
 
   const handleClick = (id: string) => { setActive(id); window.location.hash = id; window.dispatchEvent(new HashChangeEvent('hashchange')); setMobileOpen(false); setProfileOpen(false); };
