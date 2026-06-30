@@ -4,11 +4,11 @@ import random
 from datetime import datetime
 
 class GridBot:
-    def __init__(self, symbol="BTCUSDT", capital=50, grid_levels=5, grid_spacing=0.01):
+    def __init__(self, symbol="BTCUSDT", capital=50, grid_levels=5, grid_spacing=0.005):
         self.symbol = symbol
         self.capital = capital
         self.grid_levels = grid_levels
-        self.grid_spacing = grid_spacing
+        self.grid_spacing = grid_spacing  # %0.5 aralık (daha sık işlem)
         self.per_level = capital / grid_levels
         self.active = False
         self.positions = []
@@ -16,12 +16,17 @@ class GridBot:
         self.total_profit = 0
         self.current_price = 60000
         self.trade_count = 0
+        self.wins = 0
+        self.losses = 0
+        
+        # 🏆 PROFESYONEL GRID PARAMETRELERİ
+        self.commission_rate = 0.001  # %0.1 komisyon
 
     def setup_grid(self):
         self.positions = []
         for i in range(self.grid_levels):
             buy_price = self.current_price * (1 - self.grid_spacing * (i + 1))
-            sell_price = self.current_price * (1 + self.grid_spacing * (i + 1))
+            sell_price = buy_price * (1 + self.grid_spacing)  # %0.5 kâr hedefi
             self.positions.append({
                 "level": i + 1,
                 "buy_price": round(buy_price, 2),
@@ -30,55 +35,56 @@ class GridBot:
             })
 
     def update_price(self):
-        change = random.uniform(-0.003, 0.003)
+        change = random.uniform(-0.005, 0.005)  # %0.5 hareket
         self.current_price *= (1 + change)
 
     def check_and_trade(self):
         for pos in self.positions:
             if not pos["active"] and self.current_price <= pos["buy_price"]:
                 pos["active"] = True
+                self.trade_count += 1
                 self.trades.append({
                     "type": "BUY", "price": round(self.current_price, 2),
                     "level": pos["level"], "time": datetime.now().isoformat(),
                     "profit": 0
                 })
-                self.trade_count += 1
             elif pos["active"] and self.current_price >= pos["sell_price"]:
-                profit = (pos["sell_price"] - pos["buy_price"]) / pos["buy_price"] * self.per_level
-                self.total_profit += profit
+                gross_profit = (pos["sell_price"] - pos["buy_price"]) / pos["buy_price"] * self.per_level
+                commission = self.per_level * self.commission_rate * 2
+                net_profit = gross_profit - commission
+                self.total_profit += net_profit
+                self.wins += 1
                 pos["active"] = False
+                self.trade_count += 1
                 self.trades.append({
                     "type": "SELL", "price": round(self.current_price, 2),
-                    "profit": round(profit, 2), "level": pos["level"],
+                    "profit": round(net_profit, 4), "level": pos["level"],
                     "time": datetime.now().isoformat()
                 })
-                self.trade_count += 1
 
     def run(self):
         if self.active:
-            return {"status": "already_running", "symbol": self.symbol}
+            return {"status": "already_running"}
         self.active = True
         self.setup_grid()
         def loop():
             while self.active:
                 self.update_price()
                 self.check_and_trade()
-                time.sleep(3)  # 3 saniyede bir kontrol
+                time.sleep(3)
         threading.Thread(target=loop, daemon=True).start()
-        return {"status": "started", "symbol": self.symbol, "capital": self.capital}
+        return {"status": "started", "symbol": self.symbol, "capital": self.capital, "grid_spacing": f"%{self.grid_spacing * 100}"}
 
     def stop(self):
         self.active = False
-        return {"status": "stopped", "total_profit": round(self.total_profit, 2)}
+        return {"status": "stopped", "total_profit": round(self.total_profit, 4), "total_trades": self.trade_count}
 
     def get_status(self):
         return {
-            "symbol": self.symbol,
-            "active": self.active,
+            "symbol": self.symbol, "active": self.active,
             "current_price": round(self.current_price, 2),
-            "total_profit": round(self.total_profit, 2),
-            "trade_count": self.trade_count,
-            "trades": len(self.trades),
-            "recent_trades": self.trades[-10:],
+            "total_profit": round(self.total_profit, 4),
+            "trade_count": self.trade_count, "wins": self.wins,
+            "trades": len(self.trades), "recent_trades": self.trades[-10:],
             "capital": self.capital
         }
