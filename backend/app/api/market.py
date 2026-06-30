@@ -5,7 +5,6 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.services.news_service import get_live_news
 from app.services.world_market_service import get_world_prices
-from app.services.analysis import analyze_symbol, analyze_all_symbols, SYMBOLS
 from app.models.asset import PriceHistory
 from datetime import datetime, timedelta
 import random
@@ -82,8 +81,7 @@ def gateio_all():
 @router.get("/gateio/search")
 def gateio_search(q: str = ""):
     from app.services.gateio_service import search_gateio_coins
-    if not q:
-        return {"count": 0, "data": {}}
+    if not q: return {"count": 0, "data": {}}
     results = search_gateio_coins(q)
     return {"count": len(results), "data": results}
 
@@ -97,38 +95,28 @@ def gateio_order(symbol: str, side: str, quantity: float):
     from app.services.gateio_service import place_gateio_order
     return place_gateio_order(symbol.upper(), side.upper(), quantity)
 
-# AI Sinyal endpoint'leri
 @router.get("/ai-signals/{symbol}")
 def get_ai_signal(symbol: str):
-    result = analyze_symbol(symbol.upper() + "USDT")
-    return result
-
-@router.get("/ai-signals")
-def get_all_signals():
-    results = analyze_all_symbols()
-    return {"count": len(results), "signals": results}
-
-@router.get("/ai-analysis/{symbol}")
-def ai_analysis(symbol: str):
-    from app.services.binance_service import get_real_price
-    price = get_real_price(symbol.upper()) or random.uniform(100, 60000)
-    rsi = random.uniform(25, 75)
-    macd = random.uniform(-3, 3)
-    if rsi < 35 and macd < 0: signal, confidence = "BUY", 80
-    elif rsi > 65 and macd > 0: signal, confidence = "SELL", 80
-    elif rsi < 45: signal, confidence = "BUY", 65
-    elif rsi > 55: signal, confidence = "SELL", 65
-    else: signal, confidence = "HOLD", 50
-    return {"symbol": symbol.upper(), "price": round(price, 2), "signal": signal, "confidence": confidence, "indicators": {"rsi": round(rsi, 1), "macd": round(macd, 2)}, "support": round(price * 0.95, 2), "resistance": round(price * 1.05, 2), "summary": f"AI {signal} sinyali verdi (%{confidence} güven)."}
-
-# AI Sinyal endpoint'leri
-from app.services.analysis import analyze_symbol, analyze_all_symbols
-
-@router.get("/ai-signals/{symbol}")
-def get_ai_signal(symbol: str):
+    from app.services.analysis import analyze_symbol
     return analyze_symbol(symbol.upper() + "USDT")
 
 @router.get("/ai-signals")
 def get_all_signals():
+    from app.services.analysis import analyze_all_symbols
     results = analyze_all_symbols()
     return {"count": len(results), "signals": results}
+
+@router.get("/binance/live")
+def binance_live():
+    from app.services.binance_service import get_live_prices as bnb_prices
+    return bnb_prices()
+
+@router.get("/binance/balance")
+def binance_balance():
+    from app.services.binance_service import get_balance
+    return get_balance()
+
+@router.post("/binance/order")
+def binance_order(symbol: str, side: str, quantity: float):
+    from app.services.binance_service import place_order
+    return place_order(symbol, side, quantity)
