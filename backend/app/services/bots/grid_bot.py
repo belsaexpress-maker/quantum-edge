@@ -30,6 +30,11 @@ class GridBot:
             })
 
     def update_price(self):
+    from app.services.binance_service import get_real_price
+    real_price = get_real_price(self.symbol)
+    if real_price:
+        self.current_price = real_price
+    else:
         change = random.uniform(-0.003, 0.003)
         self.current_price *= (1 + change)
 
