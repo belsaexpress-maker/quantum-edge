@@ -85,3 +85,17 @@ def binance_balance():
 @router.post("/binance/order")
 def binance_order(symbol: str, side: str, quantity: float):
     return place_binance_order(symbol, side, quantity)
+
+from app.services.gateio_service import get_gateio_prices, search_gateio_coins, start_gateio_service
+
+@router.get("/gateio/all")
+def gateio_all():
+    prices = get_gateio_prices()
+    return {"count": len(prices), "data": prices}
+
+@router.get("/gateio/search")
+def gateio_search(q: str = ""):
+    if not q:
+        return {"count": 0, "data": {}}
+    results = search_gateio_coins(q)
+    return {"count": len(results), "data": results}

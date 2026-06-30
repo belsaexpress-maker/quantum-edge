@@ -20,3 +20,9 @@ def root():
 @app.get("/api/health")
 def health_check():
     return {"status": "healthy"}
+
+@app.on_event("startup")
+async def startup():
+    from app.services.gateio_service import start_gateio_service
+    start_gateio_service()
+    print("Gate.io service started")

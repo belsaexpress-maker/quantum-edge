@@ -1,62 +1,49 @@
 from app.services.bots.grid_bot import GridBot
 from app.services.bots.scalping_bot import ScalpingBot
 from app.services.bots.momentum_bot import MomentumBot
-from app.services.bots.dca_bot import DCABot
-from app.services.bots.signal_bot import SignalBot
-from app.services.bots.ai_optimize_bot import AIOptimizeBot
 
 class BotManager:
     def __init__(self):
         self.bots = {}
         self.capital = 100
-        self.allocation = {
-            "grid": 0.20,
-            "dca": 0.25,
-            "scalping": 0.15,
-            "momentum": 0.15,
-            "signal": 0.15,
-            "ai": 0.10
-        }
-
-    def set_capital(self, amount: float, allocation: dict = None):
-        """Sermaye ve dağılımı ayarla"""
-        self.capital = amount
-        if allocation:
-            self.allocation = allocation
-        return {"capital": self.capital, "allocation": self.allocation}
-
-    def start_all(self, symbol="BTCUSDT"):
-        results = {}
-        if "grid" not in self.bots:
-            self.bots["grid"] = GridBot(symbol=symbol, capital=self.capital * self.allocation.get("grid", 0.2))
-            results["grid"] = self.bots["grid"].run()
-        if "scalping" not in self.bots:
-            self.bots["scalping"] = ScalpingBot(symbol=symbol, capital=self.capital * self.allocation.get("scalping", 0.15))
-            results["scalping"] = self.bots["scalping"].run()
-        if "momentum" not in self.bots:
-            self.bots["momentum"] = MomentumBot(symbol=symbol, capital=self.capital * self.allocation.get("momentum", 0.15))
-            results["momentum"] = self.bots["momentum"].run()
-        if "dca" not in self.bots:
-            self.bots["dca"] = DCABot(symbol=symbol, capital=self.capital * self.allocation.get("dca", 0.25))
-            results["dca"] = self.bots["dca"].run()
-        if "signal" not in self.bots:
-            self.bots["signal"] = SignalBot(symbol=symbol, capital=self.capital * self.allocation.get("signal", 0.15))
-            results["signal"] = self.bots["signal"].run()
-        if "ai" not in self.bots:
-            self.bots["ai"] = AIOptimizeBot(symbol=symbol, capital=self.capital * self.allocation.get("ai", 0.10))
-            results["ai"] = self.bots["ai"].run()
-        return results
-
+    
+    def start_grid_bot(self, symbol="BTCUSDT", capital=50, grid_levels=5, spacing=0.01):
+        if "grid" in self.bots and self.bots["grid"].active:
+            return {"error": "Grid bot zaten çalışıyor"}
+        self.bots["grid"] = GridBot(symbol=symbol, capital=capital, grid_levels=grid_levels, grid_spacing=spacing)
+        return self.bots["grid"].run()
+    
+    def start_scalping_bot(self, symbol="BTCUSDT", capital=30, max_trades=50):
+        if "scalping" in self.bots and self.bots["scalping"].active:
+            return {"error": "Scalping bot zaten çalışıyor"}
+        self.bots["scalping"] = ScalpingBot(symbol=symbol, capital=capital, max_trades=max_trades)
+        return self.bots["scalping"].run()
+    
+    def start_momentum_bot(self, symbol="BTCUSDT", capital=20):
+        if "momentum" in self.bots and self.bots["momentum"].active:
+            return {"error": "Momentum bot zaten çalışıyor"}
+        self.bots["momentum"] = MomentumBot(symbol=symbol, capital=capital)
+        return self.bots["momentum"].run()
+    
+    def stop_bot(self, name: str):
+        if name in self.bots:
+            return self.bots[name].stop()
+        return {"error": f"{name} botu bulunamadı"}
+    
     def stop_all(self):
         results = {}
         for name, bot in self.bots.items():
             results[name] = bot.stop()
         return results
-
+    
     def get_all_status(self):
         status = {}
         for name, bot in self.bots.items():
-            status[name] = bot.get_status()
+            s = bot.get_status()
+            s["capital"] = bot.capital
+            status[name] = s
+        status["total_profit"] = round(sum(b.total_profit for b in self.bots.values()), 2)
+        status["active_bots"] = sum(1 for b in self.bots.values() if b.active)
         return status
 
 bot_manager = BotManager()
