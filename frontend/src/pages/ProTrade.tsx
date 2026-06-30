@@ -137,7 +137,7 @@ const ProTrade: React.FC = () => {
               <span className="text-[var(--color-text-muted)]">L: {current.low_24h?.toFixed(4)}</span>
             </div>
           </div>
-          <TradingViewChart symbol={`${symbol}USDT`} height={400} interval="60" />
+          <TradingViewChart symbol={`${symbol}USDT`} height={400} interval="60" price={current.price} />
         </div>
       </div>
 
