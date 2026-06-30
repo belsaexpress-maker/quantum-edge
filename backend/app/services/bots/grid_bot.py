@@ -63,7 +63,7 @@ class GridBot:
             while self.active:
                 self.update_price()
                 self.check_and_trade()
-                time.sleep(3)  # 3 saniyede bir kontrol
+                time.sleep(3)
         threading.Thread(target=loop, daemon=True).start()
         return {"status": "started", "symbol": self.symbol, "capital": self.capital}
 
