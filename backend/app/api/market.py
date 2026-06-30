@@ -71,3 +71,17 @@ def get_news():
 @router.get("/world")
 def get_world_markets():
     return {"markets": get_world_prices()}
+
+from app.services.binance_service import get_live_prices as get_binance_prices, get_balance, place_order as place_binance_order
+
+@router.get("/binance/live")
+def binance_live():
+    return get_binance_prices()
+
+@router.get("/binance/balance")
+def binance_balance():
+    return get_balance()
+
+@router.post("/binance/order")
+def binance_order(symbol: str, side: str, quantity: float):
+    return place_binance_order(symbol, side, quantity)
